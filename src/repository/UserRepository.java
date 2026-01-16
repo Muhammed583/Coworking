@@ -5,6 +5,7 @@ import model.User;
 import java.sql.*;
 
 public class UserRepository {
+
     public void save(User user) {
         String sql = "INSERT INTO users (full_name, membership_type) VALUES (?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -12,9 +13,9 @@ public class UserRepository {
             pstmt.setString(1, user.getFullName());
             pstmt.setString(2, user.getMembershipType());
             pstmt.executeUpdate();
-            System.out.println("Пользователь успешно сохранен!");
+            System.out.println("Пользователь сохранен!");
         } catch (SQLException e) {
-            System.out.println("Ошибка при сохранении: " + e.getMessage());
+            System.out.println("Ошибка БД: " + e.getMessage());
         }
     }
 
@@ -23,12 +24,12 @@ public class UserRepository {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            System.out.println("\n--- Список доступных мест ---");
+            System.out.println("\n--- Свободные места ---");
             while (rs.next()) {
                 System.out.println("ID: " + rs.getInt("id") + " | " + rs.getString("name") + " | " + rs.getDouble("hourly_rate") + " тг/час");
             }
         } catch (SQLException e) {
-            System.out.println("Ошибка загрузки мест: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -37,11 +38,37 @@ public class UserRepository {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, id);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next();
-            }
+            try (ResultSet rs = pstmt.executeQuery()) { return rs.next(); }
+        } catch (SQLException e) { return false; }
+    }
+
+    public void createBooking(String userName, int wsId, double price) {
+        String sql = "INSERT INTO bookings (user_name, workspace_id, total_price) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, userName);
+            pstmt.setInt(2, wsId);
+            pstmt.setDouble(3, price);
+            pstmt.executeUpdate();
         } catch (SQLException e) {
-            return false;
+            System.out.println("Ошибка записи брони: " + e.getMessage());
         }
     }
-}
+    public void showAllBookings() {
+        String sql = "SELECT user_name, total_price, booking_date FROM bookings ORDER BY booking_date DESC";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            System.out.println("\n--- ИСТОРИЯ БРОНИРОВАНИЙ ---");
+            while (rs.next()) {
+                String name = rs.getString("user_name");
+                double price = rs.getDouble("total_price");
+
+                System.out.println("Клиент: " + name + " | Сумма: " + price + " тг");
+            }
+        } catch (SQLException e) {
+            System.out.println("Ошибка при чтении истории: " + e.getMessage());
+        }
+    }
+    }

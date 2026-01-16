@@ -10,68 +10,65 @@ public class MyApplication {
 
     public void start() {
         while (true) {
-            System.out.println("\n--- Система Коворкинга ---");
-            System.out.println("1. Регистрация нового пользователя");
-            System.out.println("2. Посмотреть места и Забронировать");
+            System.out.println("\n--- Система брони коворкинга ---");
+            System.out.println("1. Регистрация нового клиента");
+            System.out.println("2. Забронировать рабочее место");
+            System.out.println("3. Просмотр всех бронирований");
             System.out.println("0. Выход");
-
             System.out.print("Выберите действие: ");
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // Очистка буфера
 
-            if (choice == 0) {
-                System.out.println("Завершение работы...");
-                break;
-            }
+            int choice = scanner.nextInt();
+            scanner.nextLine();
+
+            if (choice == 0) break;
 
             switch (choice) {
                 case 1:
-                    registerUser();
+                    System.out.print("Введите ФИО: "); String n = scanner.nextLine();
+                    System.out.print("Тип (Student/Resident): "); String t = scanner.nextLine();
+                    userRepo.save(new User(0, n, t));
                     break;
                 case 2:
                     makeBooking();
                     break;
+                case 3:
+                    userRepo.showAllBookings();
+                    break;
                 default:
-                    System.out.println("Ошибка: Неверный пункт меню!");
+                    System.out.println("Неверный ввод!");
             }
         }
     }
 
-    private void registerUser() {
-        System.out.print("Введите ФИО пользователя: ");
-        String name = scanner.nextLine();
-        System.out.print("Введите тип (STUDENT/RESIDENT): ");
-        String type = scanner.nextLine();
-
-        userRepo.save(new User(0, name, type));
-    }
-
     private void makeBooking() {
         userRepo.showAvailableWorkspaces();
+        System.out.print("\nВведите ID места: ");
+        int id = scanner.nextInt();
+        scanner.nextLine();
 
-        System.out.print("\nВведите ID выбранного места: ");
-        int workspaceId = scanner.nextInt();
-
-        if (!userRepo.workspaceExists(workspaceId)) {
-            System.out.println("!!! ОШИБКА: Места с ID " + workspaceId + " не существует в базе данных!");
+        if (!userRepo.workspaceExists(id)) {
+            System.out.println("Ошибка: Такого ID не существует!");
             return;
         }
 
-        System.out.print("Введите тип пользователя для расчета скидки: ");
-        String type = scanner.next();
+        System.out.print("Введите ваше имя для записи: ");
+        String userName = scanner.nextLine();
 
-        System.out.print("Введите количество часов: ");
-        int hours = scanner.nextInt();
+        System.out.print("Ваш статус: ");
+        String ut = scanner.next();
 
-        System.out.println("Выберите категорию брони: 1. Стандарт 2. VIP (+500 тенге)");
-        int vipChoice = scanner.nextInt();
-        boolean isVip = (vipChoice == 2);
+        System.out.print("Количество часов: ");
+        int h = scanner.nextInt();
 
-        double finalPrice = bookingService.calculatePrice(type, hours, isVip);
+        System.out.print("Категория (1-Обычная, 2-VIP +500тг): ");
+        boolean v = (scanner.nextInt() == 2);
 
-        System.out.println("\n--- Бронирование подтверждено ---");
-        System.out.println("Место ID: " + workspaceId + " забронировано.");
-        System.out.println("Итоговая стоимость: " + finalPrice + " тенге.");
+        double p = bookingService.calculatePrice(ut, h, v);
+
+        // Сохраняем итоговую запись в историю
+        userRepo.createBooking(userName, id, p);
+
+        System.out.println("\nЗабронировано! Итого к оплате: " + p + " тенге.");
     }
 
     public static void main(String[] args) {

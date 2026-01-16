@@ -1,21 +1,18 @@
 package service;
-import model.User;
 
 public class BookingService {
     public double calculatePrice(String type, int hours, boolean isVip) {
-        double rate = 1000.0; // Норм цена
+        double rate = 1000.0;
         double totalPrice;
 
-        // Логика скидки
         if ("STUDENT".equalsIgnoreCase(type)) {
-            totalPrice = rate * hours * 0.8;
+            totalPrice = rate * hours * 0.8; // Скидка 20
         } else {
             totalPrice = rate * hours;
         }
 
-        // Кидаем Наценку
         if (isVip) {
-            totalPrice += 500.0;
+            totalPrice += 500.0; // наценка
         }
 
         return totalPrice;

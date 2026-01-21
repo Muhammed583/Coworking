@@ -70,8 +70,4 @@ public class MyApplication {
 
         System.out.println("\nBooked! Total to pay: \" + p + \" tenge.");
     }
-
-    public static void main(String[] args) {
-        new MyApplication().start();
-    }
 }

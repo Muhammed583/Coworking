@@ -13,9 +13,9 @@ public class UserRepository {
             pstmt.setString(1, user.getFullName());
             pstmt.setString(2, user.getMembershipType());
             pstmt.executeUpdate();
-            System.out.println("Пользователь сохранен!");
+            System.out.println("User saved!");
         } catch (SQLException e) {
-            System.out.println("Ошибка БД: " + e.getMessage());
+            System.out.println("DB error: " + e.getMessage());
         }
     }
 
@@ -24,9 +24,9 @@ public class UserRepository {
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
-            System.out.println("\n--- Свободные места ---");
+            System.out.println("\n--- Available seats ---");
             while (rs.next()) {
-                System.out.println("ID: " + rs.getInt("id") + " | " + rs.getString("name") + " | " + rs.getDouble("hourly_rate") + " тг/час");
+                System.out.println("ID: " + rs.getInt("id") + " | " + rs.getString("name") + " | " + rs.getDouble("hourly_rate") + " tg/h");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -51,7 +51,7 @@ public class UserRepository {
             pstmt.setDouble(3, price);
             pstmt.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Ошибка записи брони: " + e.getMessage());
+            System.out.println("Booking Error: " + e.getMessage());
         }
     }
     public void showAllBookings() {
@@ -60,15 +60,15 @@ public class UserRepository {
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
-            System.out.println("\n--- ИСТОРИЯ БРОНИРОВАНИЙ ---");
+            System.out.println("\n--- BOOKING HISTORY ---");
             while (rs.next()) {
                 String name = rs.getString("user_name");
                 double price = rs.getDouble("total_price");
 
-                System.out.println("Клиент: " + name + " | Сумма: " + price + " тг");
+                System.out.println("User: " + name + " | Sum: " + price + " tg");
             }
         } catch (SQLException e) {
-            System.out.println("Ошибка при чтении истории: " + e.getMessage());
+            System.out.println("Error reading history: " + e.getMessage());
         }
     }
-    }
+}

@@ -55,7 +55,8 @@ public class MyApplication {
         String userName = scanner.nextLine();
 
         System.out.print("Your status: ");
-        String ut = scanner.next();
+        String ut = scanner.nextLine();
+
 
         System.out.print("Number of hours: ");
         int h = scanner.nextInt();
@@ -68,7 +69,8 @@ public class MyApplication {
         // Сохраняем итоговую запись в историю
         userRepo.createBooking(userName, id, p);
 
-        System.out.println("\nBooked! Total to pay: \" + p + \" tenge.");
+        System.out.println("\nBooked! Total to pay: " + p + " tenge.");
+        System.out.println("adding some authorization logic");
     }
 
     public static void main(String[] args) {

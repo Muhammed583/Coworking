@@ -1,6 +1,7 @@
 import model.User;
 import repository.UserRepository;
 import service.BookingService;
+import service.AuthConsole;   
 import java.util.Scanner;
 
 public class MyApplication {
@@ -8,12 +9,16 @@ public class MyApplication {
     private final BookingService bookingService = new BookingService();
     private final Scanner scanner = new Scanner(System.in);
 
+    private final AuthConsole authConsole = new AuthConsole(); 
+    private String currentLogin = null; 
+
     public void start() {
         while (true) {
             System.out.println("\n--- Coworking space booking system ---");
             System.out.println("1. New client registration");
             System.out.println("2. Book a workspace");
             System.out.println("3.View all bookings");
+            System.out.println("4. Authorization"); 
             System.out.println("0. Exit");
             System.out.print("Select action: ");
 
@@ -34,6 +39,12 @@ public class MyApplication {
                 case 3:
                     userRepo.showAllBookings();
                     break;
+
+                case 4: 
+                    String login = authConsole.run(scanner);
+                    if (login != null) currentLogin = login;
+                    break;
+
                 default:
                     System.out.println("Invalid input!");
             }
@@ -57,7 +68,6 @@ public class MyApplication {
         System.out.print("Your status: ");
         String ut = scanner.nextLine();
 
-
         System.out.print("Number of hours: ");
         int h = scanner.nextInt();
 
@@ -66,11 +76,15 @@ public class MyApplication {
 
         double p = bookingService.calculatePrice(ut, h, v);
 
-        // Сохраняем итоговую запись в историю
         userRepo.createBooking(userName, id, p);
 
         System.out.println("\nBooked! Total to pay: " + p + " tenge.");
-        System.out.println("adding some authorization logic");
+
+        if (currentLogin != null) {
+            System.out.println("Authorized as: " + currentLogin);
+        } else {
+            System.out.println("Not authorized.");
+        }
     }
 
     public static void main(String[] args) {

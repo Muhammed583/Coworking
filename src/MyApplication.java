@@ -1,90 +1,104 @@
-import model.User;
 import repository.UserRepository;
 import service.BookingService;
-import service.AuthConsole;   
+import service.AuthConsole;
 import java.util.Scanner;
 
 public class MyApplication {
     private final UserRepository userRepo = new UserRepository();
     private final BookingService bookingService = new BookingService();
+    private final AuthConsole authConsole = new AuthConsole();
     private final Scanner scanner = new Scanner(System.in);
 
-    private final AuthConsole authConsole = new AuthConsole(); 
-    private String currentLogin = null; 
+    private String currentLogin = null;
 
     public void start() {
         while (true) {
-            System.out.println("\n--- Coworking space booking system ---");
-            System.out.println("1. New client registration");
-            System.out.println("2. Book a workspace");
-            System.out.println("3.View all bookings");
-            System.out.println("4. Authorization"); 
-            System.out.println("0. Exit");
-            System.out.print("Select action: ");
+            printMenu();
+            int choice = readChoice();
 
-            int choice = scanner.nextInt();
-            scanner.nextLine();
-
-            if (choice == 0) break;
+            if (choice == 0) {
+                System.out.println("Exiting... Goodbye!");
+                break;
+            }
 
             switch (choice) {
                 case 1:
-                    System.out.print("Enter your full name: "); String n = scanner.nextLine();
-                    System.out.print("Type (Student/Resident): "); String t = scanner.nextLine();
-                    userRepo.save(new User(0, n, t));
+                    String login = authConsole.run(scanner);
+                    if (login != null) {
+                        currentLogin = login;
+                    }
                     break;
+
                 case 2:
-                    makeBooking();
+                    if (currentLogin == null) {
+                        System.out.println("\n[!] Error: You must authorize first (Choice 1)!");
+                    } else {
+                        makeBooking();
+                    }
                     break;
+
                 case 3:
                     userRepo.showAllBookings();
                     break;
 
-                case 4: 
-                    String login = authConsole.run(scanner);
-                    if (login != null) currentLogin = login;
-                    break;
-
                 default:
-                    System.out.println("Invalid input!");
+                    System.out.println("Invalid input! Try again.");
             }
+        }
+    }
+
+    private void printMenu() {
+        System.out.println("\n===============================");
+        System.out.println("   COWORKING BOOKING SYSTEM    ");
+        System.out.println("===============================");
+        if (currentLogin != null) {
+            System.out.println(" STATUS: Logged in as [" + currentLogin + "]");
+        } else {
+            System.out.println(" STATUS: Not authorized");
+        }
+        System.out.println("-------------------------------");
+        System.out.println("1. Authorization (Login/Register)");
+        System.out.println("2. Book a workspace");
+        System.out.println("3. View booking history");
+        System.out.println("0. Exit");
+        System.out.print("Select action: ");
+    }
+
+    private int readChoice() {
+        try {
+            return Integer.parseInt(scanner.nextLine());
+        } catch (Exception e) {
+            return -1;
         }
     }
 
     private void makeBooking() {
         userRepo.showAvailableWorkspaces();
-        System.out.print("\nEnter location ID: ");
-        int id = scanner.nextInt();
-        scanner.nextLine();
 
-        if (!userRepo.workspaceExists(id)) {
-            System.out.println("Error: This ID does not exist!");
+        System.out.print("\nEnter workspace ID: ");
+        int wsId = Integer.parseInt(scanner.nextLine());
+
+        if (!userRepo.workspaceExists(wsId)) {
+            System.out.println("Error: Workspace with this ID does not exist!");
             return;
         }
 
-        System.out.print("Please enter your name to record: ");
-        String userName = scanner.nextLine();
-
-        System.out.print("Your status: ");
-        String ut = scanner.nextLine();
+        System.out.print("Enter your status (Student/Resident): ");
+        String status = scanner.nextLine();
 
         System.out.print("Number of hours: ");
-        int h = scanner.nextInt();
+        int hours = Integer.parseInt(scanner.nextLine());
 
-        System.out.print("Category (1-Regular, 2-VIP +500 tenge): ");
-        boolean v = (scanner.nextInt() == 2);
+        System.out.print("Category (1-Regular, 2-VIP +500): ");
+        boolean isVip = (Integer.parseInt(scanner.nextLine()) == 2);
 
-        double p = bookingService.calculatePrice(ut, h, v);
+        double finalPrice = bookingService.calculatePrice(status, hours, isVip);
 
-        userRepo.createBooking(userName, id, p);
+        userRepo.createBooking(currentLogin, wsId, finalPrice);
 
-        System.out.println("\nBooked! Total to pay: " + p + " tenge.");
-
-        if (currentLogin != null) {
-            System.out.println("Authorized as: " + currentLogin);
-        } else {
-            System.out.println("Not authorized.");
-        }
+        System.out.println("\nSuccess!");
+        System.out.println("Workspace #" + wsId + " booked for " + currentLogin);
+        System.out.println("Total price: " + finalPrice + " tg.");
     }
 
     public static void main(String[] args) {

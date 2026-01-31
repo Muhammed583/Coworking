@@ -1,3 +1,5 @@
+package model;
+
 public class Workspace {
     private int id;
     private String name;

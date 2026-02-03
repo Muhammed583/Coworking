@@ -1,3 +1,4 @@
+import model.User;
 import repository.UserRepository;
 import service.BookingService;
 import service.AuthConsole;
@@ -9,7 +10,7 @@ public class MyApplication {
     private final AuthConsole authConsole = new AuthConsole();
     private final Scanner scanner = new Scanner(System.in);
 
-    private String currentLogin = null;
+    private User currentUser = null;
 
     public void start() {
         while (true) {
@@ -23,22 +24,23 @@ public class MyApplication {
 
             switch (choice) {
                 case 1:
-                    String login = authConsole.run(scanner);
-                    if (login != null) {
-                        currentLogin = login;
-                    }
+                    currentUser = authConsole.run(scanner);
                     break;
 
                 case 2:
-                    if (currentLogin == null) {
-                        System.out.println("\n[!] Error: You must authorize first (Choice 1)!");
+                    if (currentUser == null) {
+                        System.out.println("\n[!] Error: You must authorize first!");
                     } else {
                         makeBooking();
                     }
                     break;
 
                 case 3:
-                    userRepo.showAllBookings();
+                    if (currentUser == null) {
+                        System.out.println("\n[!] Error: You must authorize first!");
+                    } else {
+                        userRepo.showMyBookings(currentUser.getId());
+                    }
                     break;
 
                 default:
@@ -51,15 +53,15 @@ public class MyApplication {
         System.out.println("\n===============================");
         System.out.println("   COWORKING BOOKING SYSTEM    ");
         System.out.println("===============================");
-        if (currentLogin != null) {
-            System.out.println(" STATUS: Logged in as [" + currentLogin + "]");
+        if (currentUser != null) {
+            System.out.println(" STATUS: Logged in as [" + currentUser.getLogin() + "]");
         } else {
             System.out.println(" STATUS: Not authorized");
         }
         System.out.println("-------------------------------");
         System.out.println("1. Authorization (Login/Register)");
         System.out.println("2. Book a workspace");
-        System.out.println("3. View booking history");
+        System.out.println("3. View my booking history");
         System.out.println("0. Exit");
         System.out.print("Select action: ");
     }
@@ -73,10 +75,13 @@ public class MyApplication {
     }
 
     private void makeBooking() {
-        userRepo.showAvailableWorkspaces();
+        if (!userRepo.showAvailableWorkspaces()) {
+            System.out.println("No workspaces found in database.");
+            return;
+        }
 
         System.out.print("\nEnter workspace ID: ");
-        int wsId = Integer.parseInt(scanner.nextLine());
+        int wsId = readChoice();
 
         if (!userRepo.workspaceExists(wsId)) {
             System.out.println("Error: Workspace with this ID does not exist!");
@@ -87,17 +92,17 @@ public class MyApplication {
         String status = scanner.nextLine();
 
         System.out.print("Number of hours: ");
-        int hours = Integer.parseInt(scanner.nextLine());
+        int hours = readChoice();
 
         System.out.print("Category (1-Regular, 2-VIP +500): ");
-        boolean isVip = (Integer.parseInt(scanner.nextLine()) == 2);
+        boolean isVip = (readChoice() == 2);
 
         double finalPrice = bookingService.calculatePrice(status, hours, isVip);
 
-        userRepo.createBooking(currentLogin, wsId, finalPrice);
+        userRepo.createBooking(currentUser.getId(), currentUser.getLogin(), wsId, finalPrice);
 
         System.out.println("\nSuccess!");
-        System.out.println("Workspace #" + wsId + " booked for " + currentLogin);
+        System.out.println("Workspace #" + wsId + " booked for " + currentUser.getLogin());
         System.out.println("Total price: " + finalPrice + " tg.");
     }
 

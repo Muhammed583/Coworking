@@ -1,8 +1,8 @@
 package repository;
 
+import model.User;
 import util.DatabaseConnection;
 import util.PasswordUtil;
-
 import java.sql.*;
 
 public class AuthRepository {
@@ -15,10 +15,7 @@ public class AuthRepository {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
-        } catch (SQLException e) {
-            System.out.println("DB error: " + e.getMessage());
-            return false;
-        }
+        } catch (SQLException e) { return false; }
     }
 
     public boolean register(String login, String password) {
@@ -29,25 +26,21 @@ public class AuthRepository {
             ps.setString(2, PasswordUtil.sha256(password));
             ps.executeUpdate();
             return true;
-        } catch (SQLException e) {
-            System.out.println("Registration error: " + e.getMessage());
-            return false;
-        }
+        } catch (SQLException e) { return false; }
     }
 
-    public boolean authenticate(String login, String password) {
-        String sql = "SELECT password_hash FROM auth_users WHERE login = ?";
+    public User authenticate(String login, String password) {
+        String sql = "SELECT id FROM auth_users WHERE login = ? AND password_hash = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, login);
+            ps.setString(2, PasswordUtil.sha256(password));
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return false;
-                String storedHash = rs.getString("password_hash");
-                return storedHash.equals(PasswordUtil.sha256(password));
+                if (rs.next()) {
+                    return new User(rs.getInt("id"), login);
+                }
             }
-        } catch (SQLException e) {
-            System.out.println("Auth error: " + e.getMessage());
-            return false;
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
     }
 }

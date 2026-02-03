@@ -1,9 +1,9 @@
 package model;
 
 public class Workspace {
-    private int id;
-    private String name;
-    private double hourlyRate;
+    private final int id;
+    private final String name;
+    private final double hourlyRate;
 
     public Workspace(int id, String name, double hourlyRate) {
         this.id = id;
@@ -11,13 +11,9 @@ public class Workspace {
         this.hourlyRate = hourlyRate;
     }
 
-    // Getters
     public int getId() { return id; }
     public String getName() { return name; }
     public double getHourlyRate() { return hourlyRate; }
 
-    // Setters
-    public void setId(int id) { this.id = id; }
-    public void setName(String name) { this.name = name; }
-    public void setHourlyRate(double hourlyRate) { this.hourlyRate = hourlyRate; }
+    // Сеттеры удалены для целостности данных
 }

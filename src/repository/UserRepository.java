@@ -1,25 +1,36 @@
 package repository;
 
+import model.Workspace;
 import util.DatabaseConnection;
 import java.sql.*;
 
 public class UserRepository {
 
-    public void showAvailableWorkspaces() {
+    public boolean showAvailableWorkspaces() {
         String sql = "SELECT * FROM workspaces";
+        boolean hasData = false;
+
         try (Connection conn = DatabaseConnection.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             System.out.println("\n--- Available workspaces ---");
             while (rs.next()) {
-                System.out.println("ID: " + rs.getInt("id") +
-                        " | " + rs.getString("name") +
-                        " | " + rs.getDouble("hourly_rate") + " tg/h");
+                hasData = true;
+                Workspace ws = new Workspace(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDouble("hourly_rate")
+                );
+
+                System.out.println("ID: " + ws.getId() +
+                        " | " + ws.getName() +
+                        " | " + ws.getHourlyRate() + " tg/h");
             }
         } catch (SQLException e) {
             System.out.println("Error showing workspaces: " + e.getMessage());
         }
+        return hasData;
     }
 
     public boolean workspaceExists(int id) {
@@ -35,32 +46,45 @@ public class UserRepository {
         }
     }
 
-    public void createBooking(String userName, int wsId, double price) {
-        String sql = "INSERT INTO bookings (user_name, workspace_id, total_price) VALUES (?, ?, ?)";
+    public void createBooking(int userId, String userName, int wsId, double price) {
+        String sql = "INSERT INTO bookings (user_id, user_name, workspace_id, total_price) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, userName);
-            pstmt.setInt(2, wsId);
-            pstmt.setDouble(3, price);
+
+            pstmt.setInt(1, userId);
+            pstmt.setString(2, userName);
+            pstmt.setInt(3, wsId);
+            pstmt.setDouble(4, price);
+
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println("Booking error: " + e.getMessage());
         }
     }
 
-    public void showAllBookings() {
-        String sql = "SELECT user_name, total_price, booking_date FROM bookings ORDER BY booking_date DESC";
+    public void showMyBookings(int userId) {
+        String sql = "SELECT b.user_name, w.name as ws_name, b.total_price, b.booking_date " +
+                "FROM bookings b " +
+                "JOIN workspaces w ON b.workspace_id = w.id " +
+                "WHERE b.user_id = ? " +
+                "ORDER BY b.booking_date DESC";
+
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            System.out.println("\n--- GLOBAL BOOKING HISTORY ---");
-            while (rs.next()) {
-                String name = rs.getString("user_name");
-                double price = rs.getDouble("total_price");
-                Timestamp date = rs.getTimestamp("booking_date");
+            pstmt.setInt(1, userId);
 
-                System.out.println("User: [" + name + "] | Price: " + price + " tg | Date: " + date);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                System.out.println("\n--- YOUR PERSONAL HISTORY ---");
+                boolean hasHistory = false;
+                while (rs.next()) {
+                    hasHistory = true;
+                    System.out.println("User: [" + rs.getString("user_name") +
+                            "] | Space: " + rs.getString("ws_name") +
+                            " | Price: " + rs.getDouble("total_price") +
+                            " tg | Date: " + rs.getTimestamp("booking_date"));
+                }
+                if (!hasHistory) System.out.println("You have no bookings yet.");
             }
         } catch (SQLException e) {
             System.out.println("Error reading history: " + e.getMessage());

@@ -15,6 +15,7 @@ public class MyApplication {
     public void start() {
         while (true) {
             printMenu();
+
             int choice = readChoice();
 
             if (choice == 0) {
@@ -22,29 +23,25 @@ public class MyApplication {
                 break;
             }
 
-            switch (choice) {
-                case 1:
+            if (currentUser == null) {
+
+                if (choice == 1) {
                     currentUser = authConsole.run(scanner);
-                    break;
+                } else {
+                    System.out.println("Invalid input!");
+                }
+            } else {
 
-                case 2:
-                    if (currentUser == null) {
-                        System.out.println("\n[!] Error: You must authorize first!");
-                    } else {
+                switch (choice) {
+                    case 1:
                         makeBooking();
-                    }
-                    break;
-
-                case 3:
-                    if (currentUser == null) {
-                        System.out.println("\n[!] Error: You must authorize first!");
-                    } else {
+                        break;
+                    case 2:
                         userRepo.showMyBookings(currentUser.getId());
-                    }
-                    break;
-
-                default:
-                    System.out.println("Invalid input! Try again.");
+                        break;
+                    default:
+                        System.out.println("Invalid input!");
+                }
             }
         }
     }
@@ -53,16 +50,20 @@ public class MyApplication {
         System.out.println("\n===============================");
         System.out.println("   COWORKING BOOKING SYSTEM    ");
         System.out.println("===============================");
+
         if (currentUser != null) {
             System.out.println(" STATUS: Logged in as [" + currentUser.getLogin() + "]");
+            System.out.println("-------------------------------");
+            System.out.println("1. Book a workspace");
+            System.out.println("2. View my booking history");
+            System.out.println("0. Exit");
         } else {
             System.out.println(" STATUS: Not authorized");
+            System.out.println("-------------------------------");
+            System.out.println("1. Authorization (Login/Register)");
+            System.out.println("0. Exit");
         }
-        System.out.println("-------------------------------");
-        System.out.println("1. Authorization (Login/Register)");
-        System.out.println("2. Book a workspace");
-        System.out.println("3. View my booking history");
-        System.out.println("0. Exit");
+
         System.out.print("Select action: ");
     }
 

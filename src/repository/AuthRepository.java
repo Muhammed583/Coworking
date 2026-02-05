@@ -1,46 +1,77 @@
 package repository;
 
-import model.User;
+import model.AuthUser;
 import util.DatabaseConnection;
 import util.PasswordUtil;
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class AuthRepository {
 
-    public boolean loginExists(String login) {
-        String sql = "SELECT 1 FROM auth_users WHERE login = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, login);
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) { return false; }
-    }
-
     public boolean register(String login, String password) {
-        String sql = "INSERT INTO auth_users (login, password_hash) VALUES (?, ?)";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, login);
-            ps.setString(2, PasswordUtil.sha256(password));
-            ps.executeUpdate();
+        String sql = "INSERT INTO auth_users(login, password_hash, role) VALUES (?, ?, 'CLIENT')";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+
+            st.setString(1, login);
+            st.setString(2, PasswordUtil.hash(password));
+            st.executeUpdate();
             return true;
-        } catch (SQLException e) { return false; }
+
+        } catch (Exception e) {
+            System.out.println("Register error: " + e.getMessage());
+            return false;
+        }
     }
 
-    public User authenticate(String login, String password) {
-        String sql = "SELECT id FROM auth_users WHERE login = ? AND password_hash = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, login);
-            ps.setString(2, PasswordUtil.sha256(password));
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return new User(rs.getInt("id"), login);
-                }
+    public AuthUser getByLogin(String login) {
+        String sql = "SELECT id, login, password_hash, role FROM auth_users WHERE login = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+
+            st.setString(1, login);
+            ResultSet rs = st.executeQuery();
+
+            if (rs.next()) {
+                return new AuthUser(
+                        rs.getInt("id"),
+                        rs.getString("login"),
+                        rs.getString("password_hash"),
+                        rs.getString("role")
+                );
             }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return null;
+            return null;
+
+        } catch (Exception e) {
+            System.out.println("GetByLogin error: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public AuthUser login(String login, String password) {
+        AuthUser user = getByLogin(login);
+        if (user == null) return null;
+
+        String inputHash = PasswordUtil.hash(password);
+        if (!inputHash.equals(user.getPasswordHash())) return null;
+
+        return user;
+    }
+
+    public boolean setRole(String login, String role) {
+        String sql = "UPDATE auth_users SET role = ? WHERE login = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+
+            st.setString(1, role);
+            st.setString(2, login);
+            return st.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            System.out.println("SetRole error: " + e.getMessage());
+            return false;
+        }
     }
 }

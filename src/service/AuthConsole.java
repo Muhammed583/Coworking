@@ -1,65 +1,49 @@
 package service;
 
-import model.User;
+import model.AuthUser;
 import repository.AuthRepository;
+
 import java.util.Scanner;
 
 public class AuthConsole {
-    private final AuthRepository repo = new AuthRepository();
+    private final AuthRepository authRepo = new AuthRepository();
 
-    public User run(Scanner scanner) {
-        while (true) {
-            System.out.println("\n--- AUTH MENU ---");
-            System.out.println("1. Login");
-            System.out.println("2. Register");
-            System.out.println("0. Back");
-            System.out.print("Select action: ");
+    public AuthUser register(Scanner sc) {
+        System.out.print("New login: ");
+        String login = sc.nextLine().trim();
 
-            int c = readInt(scanner);
-            if (c == 0) return null;
+        System.out.print("New password: ");
+        String password = sc.nextLine().trim();
 
-            if (c == 1) {
-                System.out.print("Login: ");
-                String login = scanner.nextLine().trim();
-                System.out.print("Password: ");
-                String pass = scanner.nextLine();
-
-                User user = repo.authenticate(login, pass);
-                if (user != null) {
-                    System.out.println("Login success");
-                    return user;
-                } else {
-                    System.out.println("Wrong login or password");
-                }
-            }
-
-            if (c == 2) {
-                System.out.print("New login: ");
-                String login = scanner.nextLine().trim();
-                if (repo.loginExists(login)) {
-                    System.out.println("Login already exists");
-                    continue;
-                }
-                System.out.print("Password: ");
-                String p1 = scanner.nextLine();
-                System.out.print("Confirm password: ");
-                String p2 = scanner.nextLine();
-
-                if (!p1.equals(p2)) {
-                    System.out.println("Passwords do not match");
-                    continue;
-                }
-                if (repo.register(login, p1)) {
-                    System.out.println("Registration successful");
-                } else {
-                    System.out.println("Registration failed");
-                }
-            }
+        boolean ok = authRepo.register(login, password);
+        if (!ok) {
+            System.out.println("[!] Registration failed");
+            return null;
         }
+
+        System.out.println("[+] Registered successfully");
+        // Auto-login after register
+        AuthUser user = authRepo.login(login, password);
+        if (user != null) {
+            System.out.println("[+] Logged in as: " + user.getLogin());
+        }
+        return user;
     }
 
-    private int readInt(Scanner scanner) {
-        try { return Integer.parseInt(scanner.nextLine()); }
-        catch (Exception e) { return -1; }
+    public AuthUser login(Scanner sc) {
+        System.out.print("Login: ");
+        String login = sc.nextLine().trim();
+
+        System.out.print("Password: ");
+        String password = sc.nextLine().trim();
+
+        AuthUser user = authRepo.login(login, password);
+        if (user == null) {
+            System.out.println("[!] Invalid login or password");
+            return null;
+        }
+
+        System.out.println("[+] Logged in as: " + user.getLogin());
+        return user;
     }
 }

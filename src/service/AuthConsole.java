@@ -9,8 +9,29 @@ public class AuthConsole {
     private final AuthRepository authRepo = new AuthRepository();
 
     public AuthUser register(Scanner sc) {
-        System.out.print("New login: ");
-        String login = sc.nextLine().trim();
+        String login;
+        // Ask for login until a non-empty, non-existing one is provided
+        while (true) {
+            System.out.print("New login: ");
+            login = sc.nextLine().trim();
+            if (login.isEmpty()) {
+                System.out.println("[!] Login cannot be empty");
+                continue;
+            }
+
+            try {
+                if (authRepo.getByLogin(login) != null) {
+                    System.out.println("[!] Login already exists, please choose another");
+                    continue;
+                }
+            } catch (Exception e) {
+                // In case of DB error while checking, abort registration
+                System.out.println("[!] Error while checking login availability: " + e.getMessage());
+                return null;
+            }
+
+            break;
+        }
 
         System.out.print("New password: ");
         String password = sc.nextLine().trim();

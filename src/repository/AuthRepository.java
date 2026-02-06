@@ -14,14 +14,13 @@ public class AuthRepository {
         String sql = "INSERT INTO auth_users(login, password_hash, role) VALUES (?, ?, 'CLIENT')";
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement st = conn.prepareStatement(sql)) {
-
-            st.setString(1, login);
-            st.setString(2, PasswordUtil.hash(password));
-            st.executeUpdate();
-            return true;
+                st.setString(1, login);
+                st.setString(2, PasswordUtil.hash(password));
+                st.executeUpdate();
+                return true;
 
         } catch (Exception e) {
-            System.out.println("Register error: " + e.getMessage());
+            System.out.println("Register error: " );
             return false;
         }
     }

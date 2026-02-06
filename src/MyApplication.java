@@ -1,5 +1,4 @@
 import model.AuthUser;
-import repository.RepositoryFactory;
 import service.AuthConsole;
 import service.BookingService;
 
@@ -19,7 +18,7 @@ public class MyApplication {
 
     public void start() {
         while (true) {
-            clear();
+            // clear();
 
             if (currentUser == null) {
                 printGuestMenu();
@@ -38,10 +37,10 @@ public class MyApplication {
 
                 if (choice == 0) break;
 
-                if (choice == 1) bookingService.showWorkspaces();
-                else if (choice == 2) bookingService.bookWorkspace(sc, currentUser.getId());
-                else if (choice == 3) bookingService.myHistory(currentUser.getId());
-                else if (choice == 4) {
+                // if (choice == 1) bookingService.showWorkspaces(sc, currentUser.getId());
+                if (choice == 1) bookingService.showWorkspaces(sc, currentUser.getId());
+                else if (choice == 2) bookingService.myHistory(currentUser.getId());
+                else if (choice == 3) {
                     currentUser = null;
                     System.out.println("[+] Logged out");
                 } else System.out.println("[!] Invalid option");
@@ -54,10 +53,8 @@ public class MyApplication {
     }
 
     private void printGuestMenu() {
-        System.out.println("╔════════════════════════════════════╗");
-        System.out.println("║      COWORKING BOOKING SYSTEM      ║");
-        System.out.println("║          Status: Guest             ║");
-        System.out.println("╚════════════════════════════════════╝");
+        System.out.println("======  COWORKING BOOKING SYSTEM    ======");
+        System.out.println("======      Status: Guest          ======");
         System.out.println("1) Register");
         System.out.println("2) Login");
         System.out.println("0) Exit");
@@ -65,14 +62,11 @@ public class MyApplication {
     }
 
     private void printUserMenu(String login) {
-        System.out.println("╔════════════════════════════════════╗");
-        System.out.println("║      COWORKING BOOKING SYSTEM      ║");
-        System.out.printf ("║   Status: Logged in as %-10s   ║%n", login);
-        System.out.println("╚════════════════════════════════════╝");
-        System.out.println("1) View workspaces");
-        System.out.println("2) Book workspace");
-        System.out.println("3) My booking history");
-        System.out.println("4) Logout");
+        System.out.println("======   COWORKING BOOKING SYSTEM      ======");
+        System.out.printf ("======  Status: Logged in as %-10s   ======%n", login);
+        System.out.println("1) View and book workspaces");
+        System.out.println("2) My booking history");
+        System.out.println("3) Logout");
         System.out.println("0) Exit");
         System.out.print("> ");
     }
@@ -93,7 +87,7 @@ public class MyApplication {
         sc.nextLine();
     }
 
-    private void clear() {
-        for (int i = 0; i < 25; i++) System.out.println();
-    }
+    // private void clear() {
+    //     for (int i = 0; i < 25; i++) System.out.println();
+    // }
 }

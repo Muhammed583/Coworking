@@ -12,14 +12,22 @@ public class BookingService {
         List<Workspace> list = RepositoryFactory.workspaceRepo().findAll();
 
         System.out.println("\n--- Available workspaces ---");
-        // ✅ lambda requirement
+
         list.forEach(ws -> System.out.printf(
                 "ID: %d | %s | %.1f tg/h | %s%n",
                 ws.getId(), ws.getName(), ws.getHourlyRate(), ws.getCategory()
         ));
     }
 
-    public void bookWorkspace(Scanner sc, int userId) {
+    public void showWorkspaces(Scanner sc, int userId) {
+        List<Workspace> list = RepositoryFactory.workspaceRepo().findAll();
+
+        System.out.println("\n--- Available workspaces ---");
+
+        list.forEach(ws -> System.out.printf(
+                "ID: %d | %s | %.1f tg/h | %s%n",
+                ws.getId(), ws.getName(), ws.getHourlyRate(), ws.getCategory()
+        ));
         System.out.print("Enter workspace ID: ");
         int workspaceId = Integer.parseInt(sc.nextLine());
 

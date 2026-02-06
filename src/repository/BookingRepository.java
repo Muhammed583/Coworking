@@ -9,14 +9,12 @@ import java.sql.ResultSet;
 public class BookingRepository {
 
     public boolean createBooking(int userId, int workspaceId, int hours) {
-        String sql = """
-                INSERT INTO bookings(user_id, workspace_id, hours, total_price, created_at)
-                VALUES (
-                    ?, ?, ?,
-                    (SELECT hourly_rate FROM workspaces WHERE id = ?) * ?,
-                    NOW()
-                )
-                """;
+        String sql = "INSERT INTO bookings(user_id, workspace_id, hours, total_price, created_at)\n" +
+                "VALUES (\n" +
+                "    ?, ?, ?,\n" +
+                "    (SELECT hourly_rate FROM workspaces WHERE id = ?) * ?,\n" +
+                "    NOW()\n" +
+                ")";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement st = conn.prepareStatement(sql)) {
@@ -35,20 +33,18 @@ public class BookingRepository {
     }
 
     public void showBookingHistory(int userId) {
-        String sql = """
-                SELECT b.id AS booking_id,
-                       u.login,
-                       w.name AS workspace_name,
-                       w.hourly_rate,
-                       b.hours,
-                       b.total_price,
-                       b.created_at
-                FROM bookings b
-                JOIN auth_users u ON u.id = b.user_id
-                JOIN workspaces w ON w.id = b.workspace_id
-                WHERE b.user_id = ?
-                ORDER BY b.id DESC
-                """;
+    String sql = "SELECT b.id AS booking_id,\n" +
+        "       u.login,\n" +
+        "       w.name AS workspace_name,\n" +
+        "       w.hourly_rate,\n" +
+        "       b.hours,\n" +
+        "       b.total_price,\n" +
+        "       b.created_at\n" +
+        "FROM bookings b\n" +
+        "JOIN auth_users u ON u.id = b.user_id\n" +
+        "JOIN workspaces w ON w.id = b.workspace_id\n" +
+        "WHERE b.user_id = ?\n" +
+        "ORDER BY b.id DESC";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
              PreparedStatement st = conn.prepareStatement(sql)) {
@@ -62,7 +58,7 @@ public class BookingRepository {
                 while (rs.next()) {
                     has = true;
                     System.out.printf(
-                            "Booking #%d | user=%s | workspace=%s | rate=%.1f | hours=%d | total=%.1f | at=%s%n",
+                            "Booking #%d \nuser=%s \nworkspace=%s \nrate=%.1f \nhours=%d \ntotal=%.1f \nat=%s%n",
                             rs.getInt("booking_id"),
                             rs.getString("login"),
                             rs.getString("workspace_name"),

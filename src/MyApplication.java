@@ -1,5 +1,4 @@
 import model.AuthUser;
-import repository.RepositoryFactory;
 import service.AuthConsole;
 import service.BookingService;
 
@@ -33,18 +32,27 @@ public class MyApplication {
 
                 pause();
             } else {
-                printUserMenu(currentUser.getLogin());
+                printUserMenu(currentUser);
                 int choice = readInt();
 
                 if (choice == 0) break;
 
-                if (choice == 1) bookingService.showWorkspaces();
-                else if (choice == 2) bookingService.bookWorkspace(sc, currentUser.getId());
-                else if (choice == 3) bookingService.myHistory(currentUser.getId());
+                if (choice == 1) {
+                    bookingService.showWorkspaces();
+                }
+                else if (choice == 2) {
+                    if (bookingService.showWorkspaces()) { // Если вернул true (список не пуст)
+                        bookingService.bookWorkspace(sc, currentUser.getId());
+                    }
+                }
+                else if (choice == 3) {
+                    bookingService.myHistory(currentUser.getId());
+                }
                 else if (choice == 4) {
                     currentUser = null;
                     System.out.println("[+] Logged out");
-                } else System.out.println("[!] Invalid option");
+                }
+                else System.out.println("[!] Invalid option");
 
                 pause();
             }
@@ -64,10 +72,11 @@ public class MyApplication {
         System.out.print("> ");
     }
 
-    private void printUserMenu(String login) {
+    private void printUserMenu(AuthUser user) {
+        String roleLabel = user.isAdmin() ? "ADMIN" : "CLIENT";
         System.out.println("╔════════════════════════════════════╗");
         System.out.println("║      COWORKING BOOKING SYSTEM      ║");
-        System.out.printf ("║   Status: Logged in as %-10s   ║%n", login);
+        System.out.printf ("║   User: %-10s | Role: %-10s║%n", user.getLogin(), roleLabel);
         System.out.println("╚════════════════════════════════════╝");
         System.out.println("1) View workspaces");
         System.out.println("2) Book workspace");
@@ -94,6 +103,6 @@ public class MyApplication {
     }
 
     private void clear() {
-        for (int i = 0; i < 25; i++) System.out.println();
+        for (int i = 0; i < 30; i++) System.out.println();
     }
 }

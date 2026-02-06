@@ -1,113 +1,99 @@
-import model.User;
-import repository.UserRepository;
-import service.BookingService;
+import model.AuthUser;
+import repository.RepositoryFactory;
 import service.AuthConsole;
+import service.BookingService;
+
 import java.util.Scanner;
 
 public class MyApplication {
-    private final UserRepository userRepo = new UserRepository();
-    private final BookingService bookingService = new BookingService();
+
+    private final Scanner sc = new Scanner(System.in);
     private final AuthConsole authConsole = new AuthConsole();
-    private final Scanner scanner = new Scanner(System.in);
+    private final BookingService bookingService = new BookingService();
 
-    private User currentUser = null;
-
-    public void start() {
-        while (true) {
-            printMenu();
-
-            int choice = readChoice();
-
-            if (choice == 0) {
-                System.out.println("Exiting... Goodbye!");
-                break;
-            }
-
-            if (currentUser == null) {
-
-                if (choice == 1) {
-                    currentUser = authConsole.run(scanner);
-                } else {
-                    System.out.println("Invalid input!");
-                }
-            } else {
-
-                switch (choice) {
-                    case 1:
-                        makeBooking();
-                        break;
-                    case 2:
-                        userRepo.showMyBookings(currentUser.getId());
-                        break;
-                    default:
-                        System.out.println("Invalid input!");
-                }
-            }
-        }
-    }
-
-    private void printMenu() {
-        System.out.println("\n===============================");
-        System.out.println("   COWORKING BOOKING SYSTEM    ");
-        System.out.println("===============================");
-
-        if (currentUser != null) {
-            System.out.println(" STATUS: Logged in as [" + currentUser.getLogin() + "]");
-            System.out.println("-------------------------------");
-            System.out.println("1. Book a workspace");
-            System.out.println("2. View my booking history");
-            System.out.println("0. Exit");
-        } else {
-            System.out.println(" STATUS: Not authorized");
-            System.out.println("-------------------------------");
-            System.out.println("1. Authorization (Login/Register)");
-            System.out.println("0. Exit");
-        }
-
-        System.out.print("Select action: ");
-    }
-
-    private int readChoice() {
-        try {
-            return Integer.parseInt(scanner.nextLine());
-        } catch (Exception e) {
-            return -1;
-        }
-    }
-
-    private void makeBooking() {
-        if (!userRepo.showAvailableWorkspaces()) {
-            System.out.println("No workspaces found in database.");
-            return;
-        }
-
-        System.out.print("\nEnter workspace ID: ");
-        int wsId = readChoice();
-
-        if (!userRepo.workspaceExists(wsId)) {
-            System.out.println("Error: Workspace with this ID does not exist!");
-            return;
-        }
-
-        System.out.print("Enter your status (Student/Resident): ");
-        String status = scanner.nextLine();
-
-        System.out.print("Number of hours: ");
-        int hours = readChoice();
-
-        System.out.print("Category (1-Regular, 2-VIP +500): ");
-        boolean isVip = (readChoice() == 2);
-
-        double finalPrice = bookingService.calculatePrice(status, hours, isVip);
-
-        userRepo.createBooking(currentUser.getId(), currentUser.getLogin(), wsId, finalPrice);
-
-        System.out.println("\nSuccess!");
-        System.out.println("Workspace #" + wsId + " booked for " + currentUser.getLogin());
-        System.out.println("Total price: " + finalPrice + " tg.");
-    }
+    private AuthUser currentUser = null;
 
     public static void main(String[] args) {
         new MyApplication().start();
+    }
+
+    public void start() {
+        while (true) {
+            clear();
+
+            if (currentUser == null) {
+                printGuestMenu();
+                int choice = readInt();
+
+                if (choice == 0) break;
+
+                if (choice == 1) currentUser = authConsole.register(sc);
+                else if (choice == 2) currentUser = authConsole.login(sc);
+                else System.out.println("[!] Invalid option");
+
+                pause();
+            } else {
+                printUserMenu(currentUser.getLogin());
+                int choice = readInt();
+
+                if (choice == 0) break;
+
+                if (choice == 1) bookingService.showWorkspaces();
+                else if (choice == 2) bookingService.bookWorkspace(sc, currentUser.getId());
+                else if (choice == 3) bookingService.myHistory(currentUser.getId());
+                else if (choice == 4) {
+                    currentUser = null;
+                    System.out.println("[+] Logged out");
+                } else System.out.println("[!] Invalid option");
+
+                pause();
+            }
+        }
+
+        System.out.println("Bye!");
+    }
+
+    private void printGuestMenu() {
+        System.out.println("╔════════════════════════════════════╗");
+        System.out.println("║      COWORKING BOOKING SYSTEM      ║");
+        System.out.println("║          Status: Guest             ║");
+        System.out.println("╚════════════════════════════════════╝");
+        System.out.println("1) Register");
+        System.out.println("2) Login");
+        System.out.println("0) Exit");
+        System.out.print("> ");
+    }
+
+    private void printUserMenu(String login) {
+        System.out.println("╔════════════════════════════════════╗");
+        System.out.println("║      COWORKING BOOKING SYSTEM      ║");
+        System.out.printf ("║   Status: Logged in as %-10s   ║%n", login);
+        System.out.println("╚════════════════════════════════════╝");
+        System.out.println("1) View workspaces");
+        System.out.println("2) Book workspace");
+        System.out.println("3) My booking history");
+        System.out.println("4) Logout");
+        System.out.println("0) Exit");
+        System.out.print("> ");
+    }
+
+    private int readInt() {
+        while (true) {
+            String s = sc.nextLine();
+            try {
+                return Integer.parseInt(s.trim());
+            } catch (Exception e) {
+                System.out.print("[!] Enter a number\n> ");
+            }
+        }
+    }
+
+    private void pause() {
+        System.out.print("\nPress ENTER to continue...");
+        sc.nextLine();
+    }
+
+    private void clear() {
+        for (int i = 0; i < 25; i++) System.out.println();
     }
 }

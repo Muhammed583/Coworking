@@ -3,10 +3,7 @@ package repository;
 import model.AuthUser;
 import util.DatabaseConnection;
 import util.PasswordUtil;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 
 public class AuthRepository {
 
@@ -17,11 +14,24 @@ public class AuthRepository {
 
             st.setString(1, login);
             st.setString(2, PasswordUtil.hash(password));
-            st.executeUpdate();
-            return true;
 
-        } catch (Exception e) {
-            System.out.println("Register error: " + e.getMessage());
+            return st.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("[!] Register error: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean existsByLogin(String login) {
+        String sql = "SELECT 1 FROM auth_users WHERE login = ?";
+        try (Connection conn = DatabaseConnection.getInstance().getConnection();
+             PreparedStatement st = conn.prepareStatement(sql)) {
+
+            st.setString(1, login);
+            try (ResultSet rs = st.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
             return false;
         }
     }
@@ -32,22 +42,20 @@ public class AuthRepository {
              PreparedStatement st = conn.prepareStatement(sql)) {
 
             st.setString(1, login);
-            ResultSet rs = st.executeQuery();
-
-            if (rs.next()) {
-                return new AuthUser(
-                        rs.getInt("id"),
-                        rs.getString("login"),
-                        rs.getString("password_hash"),
-                        rs.getString("role")
-                );
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return new AuthUser(
+                            rs.getInt("id"),
+                            rs.getString("login"),
+                            rs.getString("password_hash"),
+                            rs.getString("role")
+                    );
+                }
             }
-            return null;
-
-        } catch (Exception e) {
-            System.out.println("GetByLogin error: " + e.getMessage());
-            return null;
+        } catch (SQLException e) {
+            System.out.println("[!] GetByLogin error: " + e.getMessage());
         }
+        return null;
     }
 
     public AuthUser login(String login, String password) {
@@ -55,9 +63,7 @@ public class AuthRepository {
         if (user == null) return null;
 
         String inputHash = PasswordUtil.hash(password);
-        if (!inputHash.equals(user.getPasswordHash())) return null;
-
-        return user;
+        return inputHash.equals(user.getPasswordHash()) ? user : null;
     }
 
     public boolean setRole(String login, String role) {
@@ -68,9 +74,8 @@ public class AuthRepository {
             st.setString(1, role);
             st.setString(2, login);
             return st.executeUpdate() > 0;
-
-        } catch (Exception e) {
-            System.out.println("SetRole error: " + e.getMessage());
+        } catch (SQLException e) {
+            System.out.println("[!] SetRole error: " + e.getMessage());
             return false;
         }
     }

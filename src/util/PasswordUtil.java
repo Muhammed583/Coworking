@@ -11,9 +11,10 @@ public class PasswordUtil {
 
             StringBuilder sb = new StringBuilder();
             for (byte b : bytes) sb.append(String.format("%02x", b));
-            return sb.toString(); // 64 chars
+            return sb.toString();
         } catch (Exception e) {
             throw new RuntimeException("Hash error: " + e.getMessage());
         }
     }
 }
+

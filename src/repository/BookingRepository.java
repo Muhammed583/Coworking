@@ -1,10 +1,11 @@
 package repository;
 
+import repository.interfaces.IBookingRepository;
 import util.DatabaseConnection;
 import java.sql.*;
 import java.text.SimpleDateFormat;
 
-public class BookingRepository {
+public class BookingRepository implements IBookingRepository {
 
     public boolean createBooking(int userId, int workspaceId, int hours) {
         String sql = """

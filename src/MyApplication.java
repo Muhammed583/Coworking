@@ -1,12 +1,15 @@
 import model.AuthUser;
 import service.AuthConsole;
 import service.BookingService;
+import service.interfaces.IAuthConsole;
+import service.interfaces.IBookingService;
+
 import java.util.Scanner;
 
 public class MyApplication {
     private final Scanner sc = new Scanner(System.in);
-    private final AuthConsole authConsole = new AuthConsole();
-    private final BookingService bookingService = new BookingService();
+    private final IAuthConsole authConsole = new AuthConsole();
+    private final IBookingService bookingService = new BookingService();
     private AuthUser currentUser = null;
 
     public static void main(String[] args) {

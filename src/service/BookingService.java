@@ -2,10 +2,12 @@ package service;
 
 import model.Workspace;
 import repository.RepositoryFactory;
+import service.interfaces.IBookingService;
+
 import java.util.List;
 import java.util.Scanner;
 
-public class BookingService {
+public class BookingService implements IBookingService {
 
     public boolean showWorkspaces() {
         List<Workspace> list = RepositoryFactory.workspaceRepo().findAll();

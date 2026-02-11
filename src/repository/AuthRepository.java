@@ -1,11 +1,12 @@
 package repository;
 
 import model.AuthUser;
+import repository.interfaces.IAuthRepository;
 import util.DatabaseConnection;
 import util.PasswordUtil;
 import java.sql.*;
 
-public class AuthRepository {
+public class AuthRepository implements IAuthRepository {
 
     public boolean register(String login, String password) {
         String sql = "INSERT INTO auth_users(login, password_hash, role) VALUES (?, ?, 'CLIENT')";

@@ -9,7 +9,7 @@ public final class DatabaseConnection {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/Book";
     private static final String USER = "postgres";
-    private static final String PASS = "admin";
+    private static final String PASS = "0000";
 
     private DatabaseConnection() { }
 

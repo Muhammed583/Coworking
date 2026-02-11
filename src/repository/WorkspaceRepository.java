@@ -1,6 +1,7 @@
 package repository;
 
 import model.Workspace;
+import repository.interfaces.IWorkspaceRepository;
 import util.DatabaseConnection;
 
 import java.sql.Connection;
@@ -10,7 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WorkspaceRepository {
+public class WorkspaceRepository implements IWorkspaceRepository {
 
     public List<Workspace> findAll() {
         String sql = "SELECT id, name, hourly_rate, COALESCE(category, 'GENERAL') AS category FROM workspaces ORDER BY id";

@@ -2,9 +2,11 @@ package service;
 
 import model.AuthUser;
 import repository.AuthRepository;
+import service.interfaces.IAuthConsole;
+
 import java.util.Scanner;
 
-public class AuthConsole {
+public class AuthConsole implements IAuthConsole {
     private final AuthRepository authRepo = new AuthRepository();
 
     public AuthUser register(Scanner sc) {

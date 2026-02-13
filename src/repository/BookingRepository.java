@@ -7,55 +7,63 @@ import java.text.SimpleDateFormat;
 
 public class BookingRepository implements IBookingRepository {
 
-    public boolean createBooking(int userId, int workspaceId, int hours) {
-        String insertSql = """
-                INSERT INTO bookings(user_id, workspace_id, hours, total_price, created_at)
-                VALUES (?, ?, ?, (SELECT hourly_rate FROM workspaces WHERE id = ?) * ?, NOW())
-                """;
-
-        String updateWorkspaceSql = "UPDATE workspaces SET is_occupied = TRUE WHERE id = ?";
-        String selectForUpdateSql = "SELECT is_occupied FROM workspaces WHERE id = ? FOR UPDATE";
+    public boolean createBooking(int userId, int workspaceId, Timestamp startTime, Timestamp endTime) {
+        String selectWorkspaceSql = "SELECT hourly_rate FROM workspaces WHERE id = ? FOR UPDATE";
+        String overlapSql = "SELECT COUNT(*) AS cnt FROM bookings WHERE workspace_id = ? AND NOT (end_time <= ? OR start_time >= ?)";
+        String insertSql = "INSERT INTO bookings(user_id, workspace_id, start_time, end_time, hours, total_price, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())";
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
             try {
                 conn.setAutoCommit(false);
 
-                // Lock the workspace row to avoid race conditions
-                try (PreparedStatement checkSt = conn.prepareStatement(selectForUpdateSql)) {
-                    checkSt.setInt(1, workspaceId);
-                    try (ResultSet rs = checkSt.executeQuery()) {
+                double hourlyRate;
+
+                try (PreparedStatement st = conn.prepareStatement(selectWorkspaceSql)) {
+                    st.setInt(1, workspaceId);
+                    try (ResultSet rs = st.executeQuery()) {
                         if (!rs.next()) {
                             conn.rollback();
                             System.out.println("[!] DB Error: workspace not found");
                             return false;
                         }
-                        boolean occupied = rs.getBoolean("is_occupied");
-                        if (occupied) {
+                        hourlyRate = rs.getDouble("hourly_rate");
+                    }
+                }
+
+
+                try (PreparedStatement st = conn.prepareStatement(overlapSql)) {
+                    st.setInt(1, workspaceId);
+                    st.setTimestamp(2, startTime);
+                    st.setTimestamp(3, endTime);
+                    try (ResultSet rs = st.executeQuery()) {
+                        if (rs.next() && rs.getInt("cnt") > 0) {
                             conn.rollback();
-                            System.out.println("Error: This place occupied");
+                            System.out.println("Error: Workspace already booked in this period");
                             return false;
                         }
                     }
                 }
 
+                long diffMs = endTime.getTime() - startTime.getTime();
+                long hours = diffMs / (1000 * 60 * 60);
+                if (hours <= 0) {
+                    conn.rollback();
+                    System.out.println("[!] Invalid time range: end must be after start");
+                    return false;
+                }
+
+                double totalPrice = hourlyRate * hours;
+
                 try (PreparedStatement st = conn.prepareStatement(insertSql)) {
                     st.setInt(1, userId);
                     st.setInt(2, workspaceId);
-                    st.setInt(3, hours);
-                    st.setInt(4, workspaceId);
-                    st.setInt(5, hours);
+                    st.setTimestamp(3, startTime);
+                    st.setTimestamp(4, endTime);
+                    st.setInt(5, (int) hours);
+                    st.setDouble(6, totalPrice);
 
                     int inserted = st.executeUpdate();
                     if (inserted == 0) {
-                        conn.rollback();
-                        return false;
-                    }
-                }
-
-                try (PreparedStatement st2 = conn.prepareStatement(updateWorkspaceSql)) {
-                    st2.setInt(1, workspaceId);
-                    int updated = st2.executeUpdate();
-                    if (updated == 0) {
                         conn.rollback();
                         return false;
                     }
@@ -78,7 +86,7 @@ public class BookingRepository implements IBookingRepository {
 
     public boolean showBookingHistory(int userId) {
         String sql = """
-            SELECT b.id, w.name, w.hourly_rate, b.hours, b.total_price, b.created_at
+            SELECT b.id, w.name, w.hourly_rate, b.start_time, b.end_time, b.total_price, b.created_at
             FROM bookings b JOIN workspaces w ON w.id = b.workspace_id
             WHERE b.user_id = ? ORDER BY b.id DESC
             """;
@@ -88,20 +96,21 @@ public class BookingRepository implements IBookingRepository {
             st.setInt(1, userId);
             try (ResultSet rs = st.executeQuery()) {
                 System.out.println("\n---  MY BOOKING HISTORY ---");
-                System.out.printf("%-4s | %-20s | %-7s | %-4s | %-10s | %-16s%n",
-                        "ID", "Workspace", "Rate", "Hrs", "Total", "Date");
-                System.out.println("---------------------------------------------------------------------------");
+                System.out.printf("%-4s | %-20s | %-7s | %-22s | %-10s | %-16s%n",
+                        "ID", "Workspace", "Rate", "Period", "Total", "Booked At");
+                System.out.println("----------------------------------------------------------------------------------------------");
 
                 boolean hasData = false;
-                SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy HH:mm");
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm");
                 while (rs.next()) {
                     hasData = true;
-                    System.out.printf("#%-3d | %-20s | %-7.0f | %-4d | %-10.0f | %-16s%n",
+                    String period = sdf.format(rs.getTimestamp("start_time")) + " - " + sdf.format(rs.getTimestamp("end_time"));
+                    System.out.printf("#%-3d | %-20s | %-7.0f | %-22s | %-10.0f | %-16s%n",
                             rs.getInt("id"), rs.getString("name").trim(), rs.getDouble("hourly_rate"),
-                            rs.getInt("hours"), rs.getDouble("total_price"), sdf.format(rs.getTimestamp("created_at")));
+                            period, rs.getDouble("total_price"), sdf.format(rs.getTimestamp("created_at")));
                 }
                 if (!hasData) System.out.println("        You haven't booked anything yet.        ");
-                System.out.println("---------------------------------------------------------------------------");
+                System.out.println("----------------------------------------------------------------------------------------------");
                 return hasData;
             }
         } catch (SQLException e) {

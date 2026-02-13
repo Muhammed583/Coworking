@@ -8,21 +8,70 @@ import java.text.SimpleDateFormat;
 public class BookingRepository implements IBookingRepository {
 
     public boolean createBooking(int userId, int workspaceId, int hours) {
-        String sql = """
+        String insertSql = """
                 INSERT INTO bookings(user_id, workspace_id, hours, total_price, created_at)
                 VALUES (?, ?, ?, (SELECT hourly_rate FROM workspaces WHERE id = ?) * ?, NOW())
                 """;
 
-        try (Connection conn = DatabaseConnection.getInstance().getConnection();
-             PreparedStatement st = conn.prepareStatement(sql)) {
-            st.setInt(1, userId);
-            st.setInt(2, workspaceId);
-            st.setInt(3, hours);
-            st.setInt(4, workspaceId);
-            st.setInt(5, hours);
-            return st.executeUpdate() > 0;
+        String updateWorkspaceSql = "UPDATE workspaces SET is_occupied = TRUE WHERE id = ?";
+        String selectForUpdateSql = "SELECT is_occupied FROM workspaces WHERE id = ? FOR UPDATE";
+
+        try (Connection conn = DatabaseConnection.getInstance().getConnection()) {
+            try {
+                conn.setAutoCommit(false);
+
+                // Lock the workspace row to avoid race conditions
+                try (PreparedStatement checkSt = conn.prepareStatement(selectForUpdateSql)) {
+                    checkSt.setInt(1, workspaceId);
+                    try (ResultSet rs = checkSt.executeQuery()) {
+                        if (!rs.next()) {
+                            conn.rollback();
+                            System.out.println("[!] DB Error: workspace not found");
+                            return false;
+                        }
+                        boolean occupied = rs.getBoolean("is_occupied");
+                        if (occupied) {
+                            conn.rollback();
+                            System.out.println("Error: This place occupied");
+                            return false;
+                        }
+                    }
+                }
+
+                try (PreparedStatement st = conn.prepareStatement(insertSql)) {
+                    st.setInt(1, userId);
+                    st.setInt(2, workspaceId);
+                    st.setInt(3, hours);
+                    st.setInt(4, workspaceId);
+                    st.setInt(5, hours);
+
+                    int inserted = st.executeUpdate();
+                    if (inserted == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                try (PreparedStatement st2 = conn.prepareStatement(updateWorkspaceSql)) {
+                    st2.setInt(1, workspaceId);
+                    int updated = st2.executeUpdate();
+                    if (updated == 0) {
+                        conn.rollback();
+                        return false;
+                    }
+                }
+
+                conn.commit();
+                return true;
+            } catch (SQLException e) {
+                try { conn.rollback(); } catch (SQLException ex) { /* ignore */ }
+                System.out.println("[!] DB Error: " + e.getMessage());
+                return false;
+            } finally {
+                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
+            }
         } catch (SQLException e) {
-            System.out.println("[!] DB Error: " + e.getMessage());
+            System.out.println("[!] DB Connection error: " + e.getMessage());
             return false;
         }
     }

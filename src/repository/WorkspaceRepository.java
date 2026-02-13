@@ -30,7 +30,8 @@ public class WorkspaceRepository implements IWorkspaceRepository {
                         rs.getBoolean("is_occupied")
                 ));
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             System.out.println("[!] FindAll workspaces error: " + e.getMessage());
         }
         return list;

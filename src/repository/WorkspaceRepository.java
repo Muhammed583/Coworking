@@ -14,7 +14,7 @@ import java.util.List;
 public class WorkspaceRepository implements IWorkspaceRepository {
 
     public List<Workspace> findAll() {
-        String sql = "SELECT id, name, hourly_rate, COALESCE(category, 'GENERAL') AS category FROM workspaces ORDER BY id";
+        String sql = "SELECT id, name, hourly_rate, COALESCE(category, 'GENERAL') AS category, COALESCE(is_occupied, FALSE) AS is_occupied FROM workspaces ORDER BY id";
         List<Workspace> list = new ArrayList<>();
 
         try (Connection conn = DatabaseConnection.getInstance().getConnection();
@@ -26,7 +26,8 @@ public class WorkspaceRepository implements IWorkspaceRepository {
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getDouble("hourly_rate"),
-                        rs.getString("category")
+                        rs.getString("category"),
+                        rs.getBoolean("is_occupied")
                 ));
             }
         } catch (SQLException e) {

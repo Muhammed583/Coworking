@@ -16,10 +16,10 @@ public class BookingService implements IBookingService {
             return false;
         }
         System.out.println("\n--- Available Workspaces ---");
-        System.out.printf("%-4s | %-20s | %-10s%n", "ID", "Name", "Price");
+        System.out.printf("%-4s | %-20s | %-15s%n", "ID", "Name", "Status");
         System.out.println("--------------------------------------------");
-        list.forEach(ws -> System.out.printf("%-4d | %-20s | %.0f tg/h%n",
-                ws.getId(), ws.getName().trim(), ws.getHourlyRate()));
+        list.forEach(ws -> System.out.printf("%-4d | %-20s | %-15s%n",
+                ws.getId(), ws.getName().trim(), ws.isOccupied() ? "[Occupied]" : String.format("%.0f tg/h", ws.getHourlyRate())));
         System.out.println("--------------------------------------------");
         return true;
     }

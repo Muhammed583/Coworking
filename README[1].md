@@ -1,87 +1,81 @@
-Coworking Space Booking System
-Project description
+# Coworking Booking System
 
-This project is a simple console-based coworking space booking system written in Java.
-The main idea of the project is to practice working with OOP, basic database logic, and layered architecture (entities, services, repositories).
+## About the Project
+This is a **simple console-based coworking booking system** written in Java.  
+The main goal of this project is to practice **object-oriented programming**, work with **databases using JDBC**, and apply basic **design patterns**.
 
-The system allows users to register, book a workspace, and view existing bookings.
-All data is stored in a database, and the application interacts with it through repositories.
+Users can register, log in, view available workspaces, book them, and see their booking history.
 
-This project was created as part of a university assignment.
+---
 
-Main features
+## Technologies
+- Java
+- PostgreSQL
+- JDBC
+- Object-Oriented Programming (OOP)
 
-User (client) registration
+---
 
-Workspace booking
+## Project Structure
+The project is divided into logical layers to keep the code clean and easy to understand:
 
-Viewing all bookings
+- `model` – classes that represent data (users, workspaces, bookings)
+- `repository` – classes that work with the database
+- `service` – business logic of the application
+- `util` – helper classes (database connection)
+- `MyApplication` – main class that runs the program
 
-Data validation for user input
+---
 
-Separation of logic into layers (entity, repository, service, controller)
+## How It Works
+1. A user starts the application
+2. Registers or logs in
+3. Views available workspaces
+4. Books a workspace
+5. Checks booking history
+6. Logs out or exits the system
 
-Basic authorization logic
+All interaction is done through a **console menu**.
 
-Technologies used
+---
 
-Java
+## Design Choices
+- **Singleton Pattern** is used for database connection
+- **Repository Pattern** separates SQL logic from the rest of the code
+- Interfaces are used to reduce tight coupling between classes
 
-JDBC
+---
 
-PostgreSQL
+## Database
+The application uses a PostgreSQL database with three main tables:
+- `auth_users`
+- `workspaces`
+- `bookings`
 
-Console input/output
+Relationships between tables are handled using foreign keys.
 
-Project structure
+---
 
-The project is divided into logical packages:
+## How to Run
+1. Create a PostgreSQL database
+2. Update database credentials in `DatabaseConnection`
+3. Run `MyApplication`
+4. Follow the instructions in the console
 
-entity — contains entity classes (Booking, Guest, Room, etc.)
+---
 
-repository — classes responsible for working with the database
+## What Can Be Improved
+This project can be extended in the future by:
+- Adding a graphical or web interface
+- Using Spring Framework
+- Adding validation and tests
+- Improving error handling
 
-service — business logic of the application
+---
 
-controller — connects user input with services
+## Authors
+Olzhas Sailau  
+Mukhammed  
+Zhaniya
 
-app / main — application entry point
-
-This structure helps keep the code readable and easier to maintain.
-
-Database
-
-The project uses PostgreSQL as a database.
-
-Basic tables:
-
-guests
-
-rooms
-
-bookings
-
-Tables are connected using foreign keys.
-For example, bookings references guests and rooms.
-
-How to run the project
-
-Install PostgreSQL
-
-Create a database for the project
-
-Configure database connection settings in the project
-
-Run the Main (or MyApplication) class
-
-Use the console menu to interact with the system
-
-Notes
-
-The project is intentionally kept simple
-
-Focus was made on understanding OOP and database interaction
-
-No graphical interface is used
-
-Error handling is basic and done through console messages
+Group: ST2507
